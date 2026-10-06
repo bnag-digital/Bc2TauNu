@@ -7,44 +7,6 @@ function and mixture-aware sampler) that turns the padded shards from
 graph_build.py into standardised, augmented, batched model inputs, using the
 split and statistics frozen in stats.json by feature_stats.py.
 
-WHAT IT DOES, PER EVENT
-    1. loads the (13, 50) node feature table and its mask from a shard
-    2. STANDARDISES each feature using the train-only statistics for the node
-       type it lives on (PV / SV / EVT group), leaving structural zeros and
-       binary flags untouched, and clipping to +-CLIP so the tails of the
-       heavy features cannot dominate
-    3. SHUFFLES the order of the real nodes (padding stays at the end). The
-       audit found Vertex_isPV == slot 0 in 5000/5000 events -- an ordering
-       leak. The model must read "this is the PV" from the is_PV flag, never
-       from position, so the order is randomised every time the event is drawn.
-    4. builds the 6 EDGE features on the fly from the raw displacement vectors
-       (node_aux), which is cheaper than storing a (13,13,6) tensor per event
-       and lets the shuffle in step 3 permute edges consistently for free
-    5. returns tensors the model consumes, plus -- separately -- the truth
-       labels (role / context / ctx_cat) for the routing analysis. The model
-       must never receive those; they travel in a distinct dict key so a
-       training loop cannot pick them up by accident.
-
-WHY STANDARDISATION LIVES HERE, NOT IN THE SHARD
-    Standardising at build time would bake one particular choice of statistics
-    into the data. Doing it here, from stats.json, means the split and the
-    scaling can be changed and the shards reused, and -- crucially -- it is
-    structurally impossible to standardise with anything other than the
-    train-only statistics, because that is all stats.json exposes.
-
-EDGE FEATURES (all symmetric except #2, which is antisymmetric)
-    0  log1p( ||v_i - v_j|| )              3D separation of the two vertices
-    1  d2PV_i - d2PV_j                       signed: which is further downstream
-    2  cos angle( v_i - PV , v_j - PV )      alignment of the two displacements
-    3  same signal hemisphere (0/1)          from is_signal_hemisphere
-    4  cos angle( v_j - v_i , v_i - PV )      "is i on the path from PV to j" --
-                                             the soft parent->child signal that
-                                             lets the model represent B->D->K
-                                             decay chains
-    5  either endpoint is the EVT node (0/1) so the global node is distinguishable
-    Displacement vectors come from node_aux; the PV's is ~0 by construction, so
-    edges touching the PV use its position (origin of the d2PV frame) directly.
-
 USAGE (as a library)
     from dataset import GraphDataset, collate, make_loader
     tr = GraphDataset("stats.json", split="train")
