@@ -1,33 +1,5 @@
 #!/usr/bin/env python3
 """
-compare_runs.py
-
-Put two or more finished runs next to each other in one table and one figure.
-Built for the two ablations that answer questions asked directly in the
-meeting:
-
-    "does removing the mass change anything?"
-        baseline : --mask_features cand3pi is_3pi_candidate
-        ablation : --mask_features cand3pi is_3pi_candidate mass
-        The only difference between them is log1p_vertex_mass, because the
-        three candidate-block masses (cand_m3pi, cand_m_rho1, cand_m_rho2) are
-        already gone in both. So any change is attributable to that one column.
-
-    "...while maintaining same accuracy"  (the reference paper's claim)
-        baseline : --mask_features cand3pi is_3pi_candidate
-        ablation : the same, plus --use_moe 0
-
-WHAT IT REPORTS
-    classification : accuracy, macro-AUC, per-class AUC
-    specialisation : NMI(expert, role) at init and trained, and the GAIN, over
-                     displaced roles only -- the gain is the learned quantity
-    the hard test  : JSD(tau, charm) among 3pi candidates
-    invariance     : cross-parent JSD, its sampling-noise floor, cross-role JSD
-    the PV         : purity and exclusivity of the primary-vertex expert
-
-Runs with --use_moe 0 have no experts, so every routing column is reported as
-"n/a" rather than silently zero.
-
 USAGE
     python3 compare_runs.py runs/n8_k2_s0_masked runs/n8_k2_s0_masked_nomass
     python3 compare_runs.py runs/*_masked* --layer 0 --out compare/
