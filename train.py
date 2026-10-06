@@ -1,59 +1,5 @@
 #!/usr/bin/env python3
 """
-train.py
-
-Stage 4: train the MoE graph transformer and record everything the
-interpretability analysis needs.
-
-WHAT ONE RUN PRODUCES
-    runs/<tag>/
-        config.json      every hyperparameter, resolved (not the CLI string)
-        metrics.json     per-epoch train/val curves + final test metrics
-        best.pt          checkpoint at best val macro-AUC
-        routing_init.npz routing BEFORE any training  <-- see below
-        routing_test.npz routing after training, on the test split
-        preds_test.npz   per-event probabilities, labels, and EVT_MVA1
-
-    A run is one command with CLI arguments, so the 10-seed x 4-expert-count
-    scan is a job array over the same script with no code changes.
-
-WHY routing_init.npz EXISTS -- the methodological point
-    Some role/expert correlation is present at INITIALISATION, before any
-    learning. PV and EVT nodes have very different input magnitudes and their
-    own type embeddings, so even a random gate separates them cleanly. Measured
-    on an untrained model, PV and EVT reliably land on their own experts while
-    tau / charm / bottom split near-identically across the same two experts.
-
-    So the null hypothesis for the routing analysis is NOT uniform routing, it
-    is routing at initialisation. Comparing trained routing against uniform
-    would credit the model with structure it was handed for free. The claim has
-    to be about tau separating from charm and bottom -- the roles that start out
-    indistinguishable to the router -- and it has to be measured as a CHANGE
-    from this snapshot. Hence the snapshot is taken automatically at step 0 of
-    every run, rather than reconstructed afterwards.
-
-LOSS
-    L = weighted cross-entropy(logits, y) + balance_weight * L_aux
-
-    Class weights are inverse-frequency from the TRAIN split counts recorded in
-    stats.json, normalised to mean 1. With the built mixture the background
-    class is ~47% of events, so unweighted training would lean on it.
-
-    balance_weight is a first-class ablation axis, not a tuning constant: it
-    trades off against specialisation. At 0 the router collapses onto one or two
-    experts; too high and it is pushed to use all experts uniformly on every
-    node, which actively destroys the role structure the study is looking for.
-
-WHAT IS DELIBERATELY NOT TRAINED ON
-    role / context / ctx_cat never enter the loss. They arrive from the dataset
-    in separate keys and are only ever written to the routing files. The model
-    is trained purely on the 3-class event label, so any role structure in the
-    routing is something it found on its own.
-
-    The exclusive tau channels (Bd2DTauNu, Lb2LcTauNu, ...) are not in the
-    training mixture at all -- they are held out as probes, so context
-    invariance is a generalisation claim about contexts never seen in training.
-
 USAGE
     # single run
     python3 train.py --stats /eos/.../stats.json --out runs --tag n8_s0 \\
@@ -66,8 +12,7 @@ USAGE
     # ablations
     --balance_weight 0.0        router collapse control
     --use_moe 0                 plain FFN, no experts
-    --no_shuffle_nodes          ordering-leak control (expect degenerate routing)
-    --n_experts 6|8|10|12       the expert-count scan
+    --n_experts 6|8|10|12       check for different expert counts
 """
 
 import argparse
