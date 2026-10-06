@@ -1,30 +1,5 @@
 #!/usr/bin/env python3
-"""
-dataset.py
 
-Stage 2 of the MoE-graph-transformer pipeline: a torch Dataset (plus a collate
-function and mixture-aware sampler) that turns the padded shards from
-graph_build.py into standardised, augmented, batched model inputs, using the
-split and statistics frozen in stats.json by feature_stats.py.
-
-USAGE (as a library)
-    from dataset import GraphDataset, collate, make_loader
-    tr = GraphDataset("stats.json", split="train")
-    va = GraphDataset("stats.json", split="val")
-    loader = make_loader(tr, batch_size=256, shuffle=True, mixture="physical")
-    for batch in loader:
-        logits = model(batch["node_feats"], batch["node_mask"],
-                       batch["node_type"], batch["edge_feats"])
-        loss = crossentropy(logits, batch["y"])
-        # batch["role"], batch["context"], batch["ctx_cat"] exist but are for
-        # evaluation only -- never feed them to the model or the loss
-
-SELF-TEST
-    python3 dataset.py --stats stats.json --selftest
-        Loads a few batches, checks shapes, mask invariants, that standardised
-        features have ~unit spread on train, that padding and structural zeros
-        stayed zero, and that the node shuffle actually permutes.
-"""
 
 import argparse
 import json
