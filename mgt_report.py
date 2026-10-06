@@ -1,32 +1,5 @@
 #!/usr/bin/env python3
 """
-mgt_report.py
-
-Stage 5b: the "show the professor" script. Reads the files a training run
-already wrote and answers three questions that routing_analysis.py does not
-answer directly:
-
-  1. Does the model route the PRIMARY VERTEX consistently?
-     -- his question, verbatim. Answered per-layer, per-channel, per-class,
-        per-event-complexity, against the initialisation baseline, and with a
-        permutation null so "consistent" is a measurement and not an adjective.
-
-  2. How does the model compare to the existing BDTs?
-     -- signal efficiency vs per-mode background efficiency, which is the
-        language section 3 of Amhis et al. uses, rather than a bare AUC.
-        BDT1 (EVT_MVA1) is carried through the pipeline, so it is scored on
-        exactly the same events.
-
-  3. Can a third-year undergrad look at a figure and tell whether the model is
-     doing what he predicted?
-     -- a set of deliberately plain figures, one question per figure, with the
-        answer written on the figure.
-
-NOTHING HERE RETRAINS ANYTHING. It reads:
-    <run>/config.json  routing_init.npz  routing_test.npz  preds_test.npz
-and writes
-    <run>/report/*.png  and  <run>/report/summary.json
-
 USAGE
     python3 mgt_report.py --run runs/n8_k2_s0_masked
     python3 mgt_report.py --run runs/n8_k2_s0_masked --layer 1
