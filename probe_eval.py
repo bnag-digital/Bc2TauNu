@@ -1,35 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate an already-trained model on held-out probe channels.
-
-WHAT THIS IS FOR
-----------------
-Everything measured so far is IN-DISTRIBUTION: the test split contains the same
-production channels the model trained on. The probe channels (Bd2DTauNu,
-Bd2DstTauNu, ...) were deliberately excluded from training by graph_build.py, so
-running on them asks a different and harder question: does the routing structure
-transfer to parent hadrons the model has never seen?
-
-There is no retraining here. The checkpoint is loaded as-is and run forward.
-
-WHY IT WRITES A FAKE RUN DIRECTORY
-----------------------------------
-mgt_report.py and attention_maps.py both expect a run directory containing
-config.json and routing_test.npz. Rather than teach them a new layout, this
-writes exactly that shape into <run>/probe_<name>/, so every existing analysis
-script works on the probes with no changes:
-
-    python3 mgt_report.py     --run $R/n8_k2_s0_masked/probe_Bd2DTauNu
-    python3 attention_maps.py --run $R/n8_k2_s0_masked/probe_Bd2DTauNu --fig 8
-
-STANDARDISATION
----------------
-The probe features MUST be standardised with the ORIGINAL run's statistics, not
-statistics recomputed on the probe sample. Otherwise every feature is re-centred
-to the probe channel's own mean and the comparison is meaningless -- the model
-would be seeing inputs on a scale it never trained on. This script therefore
-copies the "stats" block verbatim from the training stats.json and only swaps
-the file list. It refuses to run if the feature names disagree.
-
+"""
   python3 probe_eval.py --run RUNDIR --probe_shards DIR --channel Bd2DTauNu
 """
 import argparse
