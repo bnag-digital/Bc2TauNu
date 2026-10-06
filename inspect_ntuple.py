@@ -1,32 +1,5 @@
 #!/usr/bin/env python3
 """
-inspect_ntuple.py
-
-Answer, in about ten seconds, the only question that matters before pointing
-graph_build.py at a new sample: DOES THIS FILE HAVE THE BRANCHES WE NEED?
-
-WHY THIS EXISTS
-    The samples the pipeline already reads live under
-
-        .../analyses/case-studies/flavour/Bc2TauNu/flatNtuples/spring2021/prod_03/
-
-    Those are FCCAnalyses STAGE-1 OUTPUT: someone has already run the vertexing,
-    built the Tau23Pi candidates, computed the thrust-hemisphere event
-    variables, trained and applied MVA1, and dumped the result as flat branches.
-    graph_build.py consumes exactly those flat branches.
-
-    The samples under
-
-        .../generation/DelphesEvents/<production>/IDEA/
-
-    are RAW GENERATION OUTPUT, upstream of all of that. They hold EDM4hep
-    collections (ReconstructedParticles, Particle, EFlowTrack, ...), not
-    Vertex_x / MC_Vertex_PDGmother / EVT_MVA1. graph_build.py cannot read them
-    and neither can anything downstream of it.
-
-    So: run this first. If it says the branches are missing, no amount of
-    editing probe_fig8.py will help -- the input has to be produced first.
-
 USAGE
     python3 inspect_ntuple.py FILE.root [FILE2.root ...]
     python3 inspect_ntuple.py 'DIR/*.root'          # quotes: let python glob

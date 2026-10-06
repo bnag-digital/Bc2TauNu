@@ -1,36 +1,4 @@
 #!/usr/bin/env python3
-"""Role-indexed attention maps -- the analogue of Fig. 5-7 of Genovese et al.
-
-WHY THIS IS NOT A COPY OF THEIR FIGURE
---------------------------------------
-Their graph has a FIXED node identity in every event: slot 0 is always jet1,
-slot 4 is always the lepton, slot 5 is always the energy node. So an N x N
-matrix indexed by slot is meaningful, and averaging it over events is
-meaningful too.
-
-Ours is not like that. The number of vertices varies event to event (4 to 13),
-and which slot holds the tau vertex is an accident of reconstruction order. An
-attention matrix indexed by slot would average the tau vertex of one event
-against the charm vertex of the next, and the result would be mush.
-
-So we index by TRUTH ROLE instead: entry (i, j) is the mean attention paid by
-vertices of role i to vertices of role j, over every ordered pair of real nodes
-in every selected event. That is the same question their figure asks ("which
-kind of object attends to which"), asked in the only way our graph permits.
-It is arguably a cleaner version, because the axes are physics labels rather
-than reconstruction slots.
-
-Note this makes the matrix NON-SYMMETRIC and that is the point: row = query
-(the node doing the attending), column = key (the node attended to), exactly
-as in their Section 4.1.
-
-Their Fig. 5/6/7 are one plot over three event subsets; --subset reproduces
-that split.
-
-  python3 attention_maps.py --run RUNDIR                  # all test events
-  python3 attention_maps.py --run RUNDIR --subset tn       # their Fig 7
-  python3 attention_maps.py --run RUNDIR --subset tp       # their Fig 6
-"""
 import argparse
 import json
 import os

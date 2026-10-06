@@ -1,14 +1,5 @@
 #!/usr/bin/env python3
 """
-feature_table_tex.py
-
-Emit the input-variable table as LaTeX, straight from stats.json, so the table
-in the writeup cannot drift out of sync with what the model was actually fed.
-
-The applicability column is the direct analogue of the dash in Table 1 of
-Genovese et al., where a jet has no lepton charge: a feature is only populated
-on the node types where it means something, and is a structural zero elsewhere.
-
 USAGE
     python3 feature_table_tex.py --stats $S > features.tex
     # mark the columns a given run masked

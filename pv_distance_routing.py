@@ -1,16 +1,5 @@
 #!/usr/bin/env python3
-"""Does expert routing change with distance from the primary vertex?
-
-The PV sits at d2PV = 0 by construction -- it IS the reference point. So the
-question is not "at what distance does the PV stop being the PV", it is:
-
-  (a) do secondary vertices at small displacement get routed like the PV,
-      or does any nonzero displacement immediately send them elsewhere?
-  (b) is there a smooth transition with distance, or a step?
-
-We read the RAW displacement from dataset.aux (millimetres, untransformed), not
-from the standardised log1p feature, so the x axis is physical.
-
+"""
   python3 pv_distance_routing.py --run RUNDIR
 """
 import argparse

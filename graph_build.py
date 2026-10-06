@@ -1,61 +1,6 @@
 #!/usr/bin/env python3
 print("Starting graph_build", flush=True)
 """
-graph_build.py
-
-Stage 0 of the MoE-graph-transformer pipeline: turn stage-1 flat ntuples into
-padded, fixed-shape per-file tensor shards.
-
-WHAT THIS PRODUCES
-    One .pt shard per input ROOT file (restartable, parallelisable, and -- the
-    real reason -- it lets dataset.py split train/val/test BY FILE. The Bc and
-    Bu signal channels come from only 2-10 production jobs, so a shuffled
-    event-level split risks job-level correlation leaking across the split.)
-
-    Each shard is a dict of torch tensors, all aligned on a leading event axis:
-
-        node_feats  (N, 13, 50)  float32  the feature table (see FEATURE_NAMES)
-        node_aux    (N, 13,  3)  float32  raw displacement vector from PV --
-                                          NOT a model input; dataset.py uses it
-                                          to build edge features on the fly
-        node_mask   (N, 13)      bool     True = real node (incl. the EVT node)
-        node_type   (N, 13)      int8     NODE_* below
-        role        (N, 13)      int8     ROLE_* from vertex_truth; -2 = not a
-                                          vertex (pad / EVT), -1 = unmatched
-        context     (N, 13)      int32    raw grandmother PDG (int32: codes like
-                                          100443 overflow int16)
-        ctx_cat     (N, 13)      int8     CTX_CAT_* from vertex_truth
-        match_chi2  (N, 13)      float32  truth-match quality, for cuts at
-        match_iso   (N, 13)      float32    analysis time
-        y           (N,)         int8     0 = Bc, 1 = Bu, 2 = background
-        channel_id  (N,)         int8     index into meta["channels"]
-        evt_mva1    (N,)         float32  BDT1 score. BENCHMARK ONLY -- must
-                                          never be used as a model input
-        n_vtx       (N,)         int16    reco vertices before truncation
-
-    plus a `meta` dict (feature names, node-type names, channel list, source
-    file, cut values, per-file diagnostic counters).
-
-    role / context / ctx_cat are TRUTH. They are carried through so the routing
-    analysis can condition on them, and must not reach the model. The
-    train/val loop only ever consumes node_feats, node_aux, node_mask,
-    node_type and y.
-
-DESIGN NOTES / THINGS DELIBERATELY NOT DONE HERE
-    * No node-order permutation. The audit found Vertex_isPV == slot 0 in
-      5000/5000 events, which is a total ordering leak, but the fix belongs in
-      dataset.py (per-epoch random permutation as augmentation). Keeping the
-      build deterministic makes shards reproducible and diffable.
-    * No feature standardisation. That needs statistics computed on the TRAIN
-      SPLIT ONLY, which this script cannot know about; feature_stats.py does it.
-    * No edge features. 13*13*6 float32 = 4 kB/event of fully derivable
-      information, which would roughly triple shard size. dataset.py computes
-      them in the collate step from node_aux.
-    * No absolute vertex position, and no per-node azimuthal phi. e+e- is
-      exactly rotationally symmetric about the beam, so per-node phi is noise;
-      RELATIVE phi is physical and enters only via the edge features built
-      downstream from node_aux.
-
 USAGE
     python3 graph_build.py --channel Bc2TauNu   --out shards/
     python3 graph_build.py --channel all        --out shards/ --max_events_per_file 50000

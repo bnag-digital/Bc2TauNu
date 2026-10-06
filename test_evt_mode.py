@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Verify the evt_mode change is backward compatible and does what it claims."""
 import torch
 
 from model import MoEGraphTransformer, NODE_EVT

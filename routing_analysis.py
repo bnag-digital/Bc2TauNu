@@ -1,52 +1,5 @@
 #!/usr/bin/env python3
 """
-routing_analysis.py
-
-Stage 5: turn routing_init.npz / routing_test.npz into the interpretability
-result -- does the model route vertices by their PHYSICS ROLE, and is that
-routing INVARIANT to which parent hadron produced them?
-
-THE TWO CLAIMS, AND HOW EACH IS TESTED
-  1. Specialisation: routing depends on role.
-       P(expert | role) tables, per-role entropy, and NMI(expert, role),
-       every one of them reported against the INITIALISATION baseline.
-  2. Context invariance: for a fixed role, routing does NOT depend on the
-       parent hadron.
-       P(expert | role=tau, context) per context, and the pairwise
-       Jensen-Shannon distance between those distributions. Small
-       cross-context JSD for one role, alongside large cross-role JSD, is the
-       result. Either number alone means nothing.
-
-WHY EVERYTHING IS QUOTED AGAINST INITIALISATION
-    An untrained model already separates some roles: PV and EVT nodes have very
-    different input magnitudes and their own type embeddings, so a random gate
-    isolates them for free. Measured here, PV lands 0.80 on one expert and EVT
-    0.92 on the same one before a single gradient step. Quoting trained routing
-    against a uniform prior would therefore credit the model with structure it
-    was handed.
-
-    The learned quantities are: the DROP in per-role entropy, the RISE in NMI
-    over the init baseline, and -- the sharpest one -- exclusivity, i.e. roles
-    driving experts to exactly zero that they used at init.
-
-WHY TOP-1 IS NOT ENOUGH
-    With k=2 the gate selects a PAIR of experts per node. A role split ~50/50
-    across two experts in the top-1 histogram is not indecision: it is a role
-    consistently activating both members of a pair. Reading only the argmax
-    made tau look like it had not specialised at all, when in fact it had gone
-    from six experts down to exactly two. Every table here is therefore
-    reported for top-1 AND for the unordered top-k SET.
-
-CONTROLS
-    null        role labels shuffled within the node population. Collapses NMI
-                and equalises the JSDs; anything that survives this is an
-                artefact of the marginals rather than a real association.
-    negative    among 3-track 3pi-candidate vertices only, compare role=tau
-                against role=charm. Same reconstructed object, different truth.
-                If the tau expert fires equally on both, the model learned
-                "displaced 3-prong" and not tau kinematics.
-    init        the initialisation baseline described above.
-
 USAGE
     python3 routing_analysis.py --run runs/n8_k2_s0_v2
     python3 routing_analysis.py --run runs/n8_k2_s0_v2 --figures
